@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mayuresh vs Dinesh Bot</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(to bottom, #87ceeb, #fff);
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 3px solid black;
+      background: #cce7ff;
+      max-width: 100%;
+      height: auto;
+    }
+    .btn {
+      margin-top: 15px;
+      padding: 18px 35px;
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    #jumpBtn {
+      background: linear-gradient(45deg, #ff4b2b, #ff416c);
+      display: none;
+    }
+    #restartBtn {
+      background: linear-gradient(45deg, #2bff65, #1cb56c);
+      display: none;
+    }
+    #starBtn {
+      background: linear-gradient(45deg, gold, orange);
+      display: inline-block;
+    }
+    .btn:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="600" height="200"></canvas>
+  <button id="starBtn" class="btn">⭐ START GAME</button>
+  <button id="jumpBtn" class="btn">JUMP</button>
+  <button id="restartBtn" class="btn">RESTART</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const jumpBtn = document.getElementById("jumpBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const starBtn = document.getElementById("starBtn");
+
+    let player, obstacles, frame, score, gameOver, gameStarted = false;
+
+    // Load image for Dinesh Bot
+    const dineshImg = new Image();
+    dineshImg.src = "dinshe.jpg"; // Place this image in the SAME folder as HTML
+
+    function initGame() {
+      player = {
+        x: 50,
+        y: 150,
+        width: 25,
+        height: 40,
+        dy: 0,
+        gravity: 0.7,
+        jumpPower: -12,
+        grounded: true
+      };
+      obstacles = [];
+      frame = 0;
+      score = 0;
+      gameOver = false;
+      gameStarted = true;
+      restartBtn.style.display = "none";
+      starBtn.style.display = "none";
+      jumpBtn.style.display = "inline-block";
+      gameLoop();
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = "red";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      ctx.fillStyle = "black";
+      ctx.font = "14px Arial";
+      ctx.fillText("Mayuresh", player.x - 10, player.y - 5);
+    }
+
+    function drawObstacles() {
+      obstacles.forEach(ob => {
+        if (dineshImg.complete) {
+          ctx.drawImage(dineshImg, ob.x, ob.y, ob.width, ob.height);
+        }
+        ctx.fillStyle = "black";
+        ctx.font = "12px Arial";
+        ctx.fillText("Dinesh Bot", ob.x, ob.y - 5);
+      });
+    }
+
+    function updateObstacles() {
+      if (frame % 120 === 0) {
+        obstacles.push({ x: canvas.width, y: 120, width: 40, height: 60 });
+      }
+      obstacles.forEach(ob => ob.x -= 5);
+      obstacles = obstacles.filter(ob => ob.x + ob.width > 0);
+    }
+
+    function checkCollision() {
+      for (let ob of obstacles) {
+        if (
+          player.x < ob.x + ob.width &&
+          player.x + player.width > ob.x &&
+          player.y < ob.y + ob.height &&
+          player.y + player.height > ob.y
+        ) {
+          gameOver = true;
+        }
+      }
+    }
+
+    function drawScore() {
+      ctx.fillStyle = "black";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 20);
+    }
+
+    function updatePlayer() {
+      player.y += player.dy;
+      player.dy += player.gravity;
+
+      if (player.y + player.height >= canvas.height - 20) {
+        player.y = canvas.height - 20 - player.height;
+        player.dy = 0;
+        player.grounded = true;
+      }
+    }
+
+    function jump() {
+      if (player.grounded) {
+        player.dy = player.jumpPower;
+        player.grounded = false;
+      }
+    }
+
+    function gameLoop() {
+      if (!gameStarted) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "black";
+        ctx.font = "28px Arial";
+        ctx.fillText("Click ⭐ START GAME to begin!", 120, 100);
+        return;
+      }
+
+      if (gameOver) {
+        ctx.fillStyle = "black";
+        ctx.font = "30px Arial";
+        ctx.fillText("Game Over!", 220, 100);
+        restartBtn.style.display = "inline-block";
+        jumpBtn.style.display = "none";
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw ground
+      ctx.fillStyle = "#654321";
+      ctx.fillRect(0, 170, canvas.width, 30);
+
+      updatePlayer();
+      updateObstacles();
+      checkCollision();
+      drawPlayer();
+      drawObstacles();
+      drawScore();
+
+      frame++;
+      score = Math.floor(frame / 5);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Controls for PC
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space" && gameStarted) jump();
+    });
+
+    // Buttons
+    jumpBtn.addEventListener("click", jump);
+    restartBtn.addEventListener("click", initGame);
+    starBtn.addEventListener("click", initGame);
+
+    // Mobile touch support
+    canvas.addEventListener("touchstart", () => {
+      if (gameStarted) jump();
+    });
+
+    // Show start screen
+    gameLoop();
+  </script>
+</body>
+</html>
